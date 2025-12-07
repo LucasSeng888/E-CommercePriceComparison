@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品价格追踪与对比报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Inter', 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+        .card { transition: all 0.2s; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .table-scroll-container { max-height: 400px; /* 限制最大高度以确保只显示约10行 */ overflow-y: auto; }
+        .filter-btn.active { background-color: #0ea5e9; color: white; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4 md:p-10">
+
+    <div class="max-w-6xl mx-auto space-y-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-2">🛍️ 跨平台价格追踪报告</h1>
+            <p class="text-slate-500 text-sm">本次报告于 2025-12-08 05:35:16 生成</p>
+        </header>
+
+        <!-- AI Summary & Key Stats -->
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- AI Summary Card -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-blue-100 card">
+                <div class="flex items-center mb-3">
+                    <i class="fa-solid fa-robot text-blue-500 mr-3 text-xl"></i>
+                    <h2 class="text-xl font-semibold text-blue-900">AI 购物建议</h2>
+                </div>
+                <p class="text-lg font-medium text-slate-700">
+                    AI 总结生成失败，请检查 API 配置。
+                </p>
+            </div>
+            
+            <!-- Key Stats Card -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg border border-slate-100 card">
+                <h2 class="text-xl font-semibold mb-4">今日价格统计 (2025-12-08)</h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-500">最低价 (Amazon)</span>
+                        <!-- 注意：这里假设所有货币已转换为 USD，如果未转换，请修改这里的货币符号 -->
+                        <span class="text-lg font-bold text-green-600">$534.78</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-500">最高价</span>
+                        <span class="text-lg font-bold text-red-600">$678.0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-500">平均价</span>
+                        <span class="text-lg font-bold text-blue-600">$606.39</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Detail Table & Filter -->
+        <section class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
+            <h3 class="text-2xl font-bold mb-4">🛒 商品价格明细</h3>
+            
+            <!-- Filter Controls -->
+            <div class="mb-4 flex flex-wrap gap-2 items-center">
+                <span class="text-sm font-medium mr-2 text-slate-600">筛选平台:</span>
+                <button onclick="filterTable('all', this)" class="filter-btn px-4 py-2 rounded-full text-sm bg-blue-500 text-white active transition">全部</button>
+                
+                <!-- 优化去重逻辑：在 Python/Jinja2 模板中生成不重复的平台按钮 -->
+                
+                
+                    
+                        
+                        <button onclick="filterTable('Amazon', this)" class="filter-btn px-4 py-2 rounded-full text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Amazon</button>
+                    
+                
+                    
+                        
+                        <button onclick="filterTable('Lazada', this)" class="filter-btn px-4 py-2 rounded-full text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Lazada</button>
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+            </div>
+
+            <!-- Table Container with Scroll -->
+            <div class="table-scroll-container border border-slate-200 rounded-lg shadow-inner">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">平台</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">商品名称</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">价格</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">货币</th>
+                            <!-- 新增：时间列 -->
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">更新时间</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">链接</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-slate-200" id="price-table-body">
+                        
+                        <tr data-platform="Amazon">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Amazon</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrica...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">534.78</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 03:36:10</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.amazon.com/Razer-Viper-Wireless-Esports-Gaming/dp/B0CW25XR5R/ref=sr_1_1?crid=VPA2W3SR644P&dib=eyJ2IjoiMSJ9.DfP8lRxLgzx9m9odUjrZnk3fod87QoaPYLVL92b59P6px6J_37JuBtmZlosgnw3Nb3ltrQd8kYnun-Qgl2se2j-kSbavgoJK4iPSfFVakOFHsSR8XqFnbMqvvvpyPFUun9hvqNmZFktAnmf6CJXIsZgCuJQ7k2q_jmxmvMhBF_M_LQo5EysYzwhVAf1WeEE_zA8h23WUFCxCtgww2QlCp7NhW2RI9w8_kwO2wI5KweE.gXlGZY4abhh0LnCevMfT9YWKM3Y2EsqVhzPiGOj13jQ&dib_tag=se&keywords=razer&qid=1764923596&sprefix=raze%2Caps%2C972&sr=8-1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Lazada">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Lazada</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse | 54g Light...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">678.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 03:36:49</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.lazada.com.my/products/pdp-i4426848765-s-24882409154.html?c=&channelParams=&key=2bgaming%252Bmouse%252Bnid%252B3A4426848765%252Bsrc%252BLazadaMainSrp%252BBrn%252B3A7F789dc8c5b87cf3d11bb53df585f18b%252Bredirect_id%252B3A300586176023%252Bsession_id%252B3A%252Bbiz_source%252B3Ah5_hp%252B3BsLot%252B3A0%252B3Butlog_bucket_id%252B3A3042786%252B3BtemplateInfo%252B3A107880_D_E%252523-1_A3_C%25252325231124_L%252523252325231124_L%252B3Bsearch&price=3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b%2B3BoriginPrice%3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b&review=42&sale=131&search=1&source=search&spm=a2o4k.searchlist.list.0&stock=1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Amazon">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Amazon</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrica...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">534.78</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 04:33:13</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.amazon.com/Razer-Viper-Wireless-Esports-Gaming/dp/B0CW25XR5R/ref=sr_1_1?crid=VPA2W3SR644P&dib=eyJ2IjoiMSJ9.DfP8lRxLgzx9m9odUjrZnk3fod87QoaPYLVL92b59P6px6J_37JuBtmZlosgnw3Nb3ltrQd8kYnun-Qgl2se2j-kSbavgoJK4iPSfFVakOFHsSR8XqFnbMqvvvpyPFUun9hvqNmZFktAnmf6CJXIsZgCuJQ7k2q_jmxmvMhBF_M_LQo5EysYzwhVAf1WeEE_zA8h23WUFCxCtgww2QlCp7NhW2RI9w8_kwO2wI5KweE.gXlGZY4abhh0LnCevMfT9YWKM3Y2EsqVhzPiGOj13jQ&dib_tag=se&keywords=razer&qid=1764923596&sprefix=raze%2Caps%2C972&sr=8-1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Lazada">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Lazada</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse | 54g Light...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">678.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 04:33:53</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.lazada.com.my/products/pdp-i4426848765-s-24882409154.html?c=&channelParams=&key=2bgaming%252Bmouse%252Bnid%252B3A4426848765%252Bsrc%252BLazadaMainSrp%252BBrn%252B3A7F789dc8c5b87cf3d11bb53df585f18b%252Bredirect_id%252B3A300586176023%252Bsession_id%252B3A%252Bbiz_source%252B3Ah5_hp%252B3BsLot%252B3A0%252B3Butlog_bucket_id%252B3A3042786%252B3BtemplateInfo%252B3A107880_D_E%252523-1_A3_C%25252325231124_L%252523252325231124_L%252B3Bsearch&price=3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b%2B3BoriginPrice%3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b&review=42&sale=131&search=1&source=search&spm=a2o4k.searchlist.list.0&stock=1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Amazon">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Amazon</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrica...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">534.78</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 04:34:21</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.amazon.com/Razer-Viper-Wireless-Esports-Gaming/dp/B0CW25XR5R/ref=sr_1_1?crid=VPA2W3SR644P&dib=eyJ2IjoiMSJ9.DfP8lRxLgzx9m9odUjrZnk3fod87QoaPYLVL92b59P6px6J_37JuBtmZlosgnw3Nb3ltrQd8kYnun-Qgl2se2j-kSbavgoJK4iPSfFVakOFHsSR8XqFnbMqvvvpyPFUun9hvqNmZFktAnmf6CJXIsZgCuJQ7k2q_jmxmvMhBF_M_LQo5EysYzwhVAf1WeEE_zA8h23WUFCxCtgww2QlCp7NhW2RI9w8_kwO2wI5KweE.gXlGZY4abhh0LnCevMfT9YWKM3Y2EsqVhzPiGOj13jQ&dib_tag=se&keywords=razer&qid=1764923596&sprefix=raze%2Caps%2C972&sr=8-1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Lazada">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Lazada</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse | 54g Light...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">678.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 04:34:52</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.lazada.com.my/products/pdp-i4426848765-s-24882409154.html?c=&channelParams=&key=2bgaming%252Bmouse%252Bnid%252B3A4426848765%252Bsrc%252BLazadaMainSrp%252BBrn%252B3A7F789dc8c5b87cf3d11bb53df585f18b%252Bredirect_id%252B3A300586176023%252Bsession_id%252B3A%252Bbiz_source%252B3Ah5_hp%252B3BsLot%252B3A0%252B3Butlog_bucket_id%252B3A3042786%252B3BtemplateInfo%252B3A107880_D_E%252523-1_A3_C%25252325231124_L%252523252325231124_L%252B3Bsearch&price=3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b%2B3BoriginPrice%3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b&review=42&sale=131&search=1&source=search&spm=a2o4k.searchlist.list.0&stock=1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Amazon">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Amazon</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrica...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">534.78</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 04:38:19</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.amazon.com/Razer-Viper-Wireless-Esports-Gaming/dp/B0CW25XR5R/ref=sr_1_1?crid=VPA2W3SR644P&dib=eyJ2IjoiMSJ9.DfP8lRxLgzx9m9odUjrZnk3fod87QoaPYLVL92b59P6px6J_37JuBtmZlosgnw3Nb3ltrQd8kYnun-Qgl2se2j-kSbavgoJK4iPSfFVakOFHsSR8XqFnbMqvvvpyPFUun9hvqNmZFktAnmf6CJXIsZgCuJQ7k2q_jmxmvMhBF_M_LQo5EysYzwhVAf1WeEE_zA8h23WUFCxCtgww2QlCp7NhW2RI9w8_kwO2wI5KweE.gXlGZY4abhh0LnCevMfT9YWKM3Y2EsqVhzPiGOj13jQ&dib_tag=se&keywords=razer&qid=1764923596&sprefix=raze%2Caps%2C972&sr=8-1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Lazada">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Lazada</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse | 54g Light...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">678.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 04:38:49</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.lazada.com.my/products/pdp-i4426848765-s-24882409154.html?c=&channelParams=&key=2bgaming%252Bmouse%252Bnid%252B3A4426848765%252Bsrc%252BLazadaMainSrp%252BBrn%252B3A7F789dc8c5b87cf3d11bb53df585f18b%252Bredirect_id%252B3A300586176023%252Bsession_id%252B3A%252Bbiz_source%252B3Ah5_hp%252B3BsLot%252B3A0%252B3Butlog_bucket_id%252B3A3042786%252B3BtemplateInfo%252B3A107880_D_E%252523-1_A3_C%25252325231124_L%252523252325231124_L%252B3Bsearch&price=3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b%2B3BoriginPrice%3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b&review=42&sale=131&search=1&source=search&spm=a2o4k.searchlist.list.0&stock=1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Amazon">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Amazon</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrica...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">534.78</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 04:51:25</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.amazon.com/Razer-Viper-Wireless-Esports-Gaming/dp/B0CW25XR5R/ref=sr_1_1?crid=VPA2W3SR644P&dib=eyJ2IjoiMSJ9.DfP8lRxLgzx9m9odUjrZnk3fod87QoaPYLVL92b59P6px6J_37JuBtmZlosgnw3Nb3ltrQd8kYnun-Qgl2se2j-kSbavgoJK4iPSfFVakOFHsSR8XqFnbMqvvvpyPFUun9hvqNmZFktAnmf6CJXIsZgCuJQ7k2q_jmxmvMhBF_M_LQo5EysYzwhVAf1WeEE_zA8h23WUFCxCtgww2QlCp7NhW2RI9w8_kwO2wI5KweE.gXlGZY4abhh0LnCevMfT9YWKM3Y2EsqVhzPiGOj13jQ&dib_tag=se&keywords=razer&qid=1764923596&sprefix=raze%2Caps%2C972&sr=8-1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Lazada">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Lazada</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse | 54g Light...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">678.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 04:51:58</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.lazada.com.my/products/pdp-i4426848765-s-24882409154.html?c=&channelParams=&key=2bgaming%252Bmouse%252Bnid%252B3A4426848765%252Bsrc%252BLazadaMainSrp%252BBrn%252B3A7F789dc8c5b87cf3d11bb53df585f18b%252Bredirect_id%252B3A300586176023%252Bsession_id%252B3A%252Bbiz_source%252B3Ah5_hp%252B3BsLot%252B3A0%252B3Butlog_bucket_id%252B3A3042786%252B3BtemplateInfo%252B3A107880_D_E%252523-1_A3_C%25252325231124_L%252523252325231124_L%252B3Bsearch&price=3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b%2B3BoriginPrice%3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b&review=42&sale=131&search=1&source=search&spm=a2o4k.searchlist.list.0&stock=1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Amazon">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Amazon</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrica...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">534.78</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 04:59:14</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.amazon.com/Razer-Viper-Wireless-Esports-Gaming/dp/B0CW25XR5R/ref=sr_1_1?crid=VPA2W3SR644P&dib=eyJ2IjoiMSJ9.DfP8lRxLgzx9m9odUjrZnk3fod87QoaPYLVL92b59P6px6J_37JuBtmZlosgnw3Nb3ltrQd8kYnun-Qgl2se2j-kSbavgoJK4iPSfFVakOFHsSR8XqFnbMqvvvpyPFUun9hvqNmZFktAnmf6CJXIsZgCuJQ7k2q_jmxmvMhBF_M_LQo5EysYzwhVAf1WeEE_zA8h23WUFCxCtgww2QlCp7NhW2RI9w8_kwO2wI5KweE.gXlGZY4abhh0LnCevMfT9YWKM3Y2EsqVhzPiGOj13jQ&dib_tag=se&keywords=razer&qid=1764923596&sprefix=raze%2Caps%2C972&sr=8-1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Lazada">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Lazada</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse | 54g Light...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">678.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 04:59:48</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.lazada.com.my/products/pdp-i4426848765-s-24882409154.html?c=&channelParams=&key=2bgaming%252Bmouse%252Bnid%252B3A4426848765%252Bsrc%252BLazadaMainSrp%252BBrn%252B3A7F789dc8c5b87cf3d11bb53df585f18b%252Bredirect_id%252B3A300586176023%252Bsession_id%252B3A%252Bbiz_source%252B3Ah5_hp%252B3BsLot%252B3A0%252B3Butlog_bucket_id%252B3A3042786%252B3BtemplateInfo%252B3A107880_D_E%252523-1_A3_C%25252325231124_L%252523252325231124_L%252B3Bsearch&price=3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b%2B3BoriginPrice%3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b&review=42&sale=131&search=1&source=search&spm=a2o4k.searchlist.list.0&stock=1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Amazon">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Amazon</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrica...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">534.78</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 05:07:25</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.amazon.com/Razer-Viper-Wireless-Esports-Gaming/dp/B0CW25XR5R/ref=sr_1_1?crid=VPA2W3SR644P&dib=eyJ2IjoiMSJ9.DfP8lRxLgzx9m9odUjrZnk3fod87QoaPYLVL92b59P6px6J_37JuBtmZlosgnw3Nb3ltrQd8kYnun-Qgl2se2j-kSbavgoJK4iPSfFVakOFHsSR8XqFnbMqvvvpyPFUun9hvqNmZFktAnmf6CJXIsZgCuJQ7k2q_jmxmvMhBF_M_LQo5EysYzwhVAf1WeEE_zA8h23WUFCxCtgww2QlCp7NhW2RI9w8_kwO2wI5KweE.gXlGZY4abhh0LnCevMfT9YWKM3Y2EsqVhzPiGOj13jQ&dib_tag=se&keywords=razer&qid=1764923596&sprefix=raze%2Caps%2C972&sr=8-1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Lazada">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Lazada</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse | 54g Light...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">678.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 05:07:57</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.lazada.com.my/products/pdp-i4426848765-s-24882409154.html?c=&channelParams=&key=2bgaming%252Bmouse%252Bnid%252B3A4426848765%252Bsrc%252BLazadaMainSrp%252BBrn%252B3A7F789dc8c5b87cf3d11bb53df585f18b%252Bredirect_id%252B3A300586176023%252Bsession_id%252B3A%252Bbiz_source%252B3Ah5_hp%252B3BsLot%252B3A0%252B3Butlog_bucket_id%252B3A3042786%252B3BtemplateInfo%252B3A107880_D_E%252523-1_A3_C%25252325231124_L%252523252325231124_L%252B3Bsearch&price=3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b%2B3BoriginPrice%3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b&review=42&sale=131&search=1&source=search&spm=a2o4k.searchlist.list.0&stock=1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Amazon">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Amazon</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrica...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">534.78</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 05:10:47</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.amazon.com/Razer-Viper-Wireless-Esports-Gaming/dp/B0CW25XR5R/ref=sr_1_1?crid=VPA2W3SR644P&dib=eyJ2IjoiMSJ9.DfP8lRxLgzx9m9odUjrZnk3fod87QoaPYLVL92b59P6px6J_37JuBtmZlosgnw3Nb3ltrQd8kYnun-Qgl2se2j-kSbavgoJK4iPSfFVakOFHsSR8XqFnbMqvvvpyPFUun9hvqNmZFktAnmf6CJXIsZgCuJQ7k2q_jmxmvMhBF_M_LQo5EysYzwhVAf1WeEE_zA8h23WUFCxCtgww2QlCp7NhW2RI9w8_kwO2wI5KweE.gXlGZY4abhh0LnCevMfT9YWKM3Y2EsqVhzPiGOj13jQ&dib_tag=se&keywords=razer&qid=1764923596&sprefix=raze%2Caps%2C972&sr=8-1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Lazada">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Lazada</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse | 54g Light...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">678.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 05:11:17</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.lazada.com.my/products/pdp-i4426848765-s-24882409154.html?c=&channelParams=&key=2bgaming%252Bmouse%252Bnid%252B3A4426848765%252Bsrc%252BLazadaMainSrp%252BBrn%252B3A7F789dc8c5b87cf3d11bb53df585f18b%252Bredirect_id%252B3A300586176023%252Bsession_id%252B3A%252Bbiz_source%252B3Ah5_hp%252B3BsLot%252B3A0%252B3Butlog_bucket_id%252B3A3042786%252B3BtemplateInfo%252B3A107880_D_E%252523-1_A3_C%25252325231124_L%252523252325231124_L%252B3Bsearch&price=3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b%2B3BoriginPrice%3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b&review=42&sale=131&search=1&source=search&spm=a2o4k.searchlist.list.0&stock=1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Amazon">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Amazon</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrica...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">534.78</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 05:32:34</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.amazon.com/Razer-Viper-Wireless-Esports-Gaming/dp/B0CW25XR5R/ref=sr_1_1?crid=VPA2W3SR644P&dib=eyJ2IjoiMSJ9.DfP8lRxLgzx9m9odUjrZnk3fod87QoaPYLVL92b59P6px6J_37JuBtmZlosgnw3Nb3ltrQd8kYnun-Qgl2se2j-kSbavgoJK4iPSfFVakOFHsSR8XqFnbMqvvvpyPFUun9hvqNmZFktAnmf6CJXIsZgCuJQ7k2q_jmxmvMhBF_M_LQo5EysYzwhVAf1WeEE_zA8h23WUFCxCtgww2QlCp7NhW2RI9w8_kwO2wI5KweE.gXlGZY4abhh0LnCevMfT9YWKM3Y2EsqVhzPiGOj13jQ&dib_tag=se&keywords=razer&qid=1764923596&sprefix=raze%2Caps%2C972&sr=8-1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Lazada">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Lazada</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse | 54g Light...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">678.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 05:33:06</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.lazada.com.my/products/pdp-i4426848765-s-24882409154.html?c=&channelParams=&key=2bgaming%252Bmouse%252Bnid%252B3A4426848765%252Bsrc%252BLazadaMainSrp%252BBrn%252B3A7F789dc8c5b87cf3d11bb53df585f18b%252Bredirect_id%252B3A300586176023%252Bsession_id%252B3A%252Bbiz_source%252B3Ah5_hp%252B3BsLot%252B3A0%252B3Butlog_bucket_id%252B3A3042786%252B3BtemplateInfo%252B3A107880_D_E%252523-1_A3_C%25252325231124_L%252523252325231124_L%252B3Bsearch&price=3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b%2B3BoriginPrice%3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b&review=42&sale=131&search=1&source=search&spm=a2o4k.searchlist.list.0&stock=1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Amazon">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Amazon</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrica...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">534.78</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 05:34:33</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.amazon.com/Razer-Viper-Wireless-Esports-Gaming/dp/B0CW25XR5R/ref=sr_1_1?crid=VPA2W3SR644P&dib=eyJ2IjoiMSJ9.DfP8lRxLgzx9m9odUjrZnk3fod87QoaPYLVL92b59P6px6J_37JuBtmZlosgnw3Nb3ltrQd8kYnun-Qgl2se2j-kSbavgoJK4iPSfFVakOFHsSR8XqFnbMqvvvpyPFUun9hvqNmZFktAnmf6CJXIsZgCuJQ7k2q_jmxmvMhBF_M_LQo5EysYzwhVAf1WeEE_zA8h23WUFCxCtgww2QlCp7NhW2RI9w8_kwO2wI5KweE.gXlGZY4abhh0LnCevMfT9YWKM3Y2EsqVhzPiGOj13jQ&dib_tag=se&keywords=razer&qid=1764923596&sprefix=raze%2Caps%2C972&sr=8-1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                        <tr data-platform="Lazada">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Lazada</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">Razer Viper V3 Pro Wireless Esports Gaming Mouse | 54g Light...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">678.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">RM</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">2025-12-08 05:35:05</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="https://www.lazada.com.my/products/pdp-i4426848765-s-24882409154.html?c=&channelParams=&key=2bgaming%252Bmouse%252Bnid%252B3A4426848765%252Bsrc%252BLazadaMainSrp%252BBrn%252B3A7F789dc8c5b87cf3d11bb53df585f18b%252Bredirect_id%252B3A300586176023%252Bsession_id%252B3A%252Bbiz_source%252B3Ah5_hp%252B3BsLot%252B3A0%252B3Butlog_bucket_id%252B3A3042786%252B3BtemplateInfo%252B3A107880_D_E%252523-1_A3_C%25252325231124_L%252523252325231124_L%252B3Bsearch&price=3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b%2B3BoriginPrice%3A67800%2B3BdisplayPrice%3A67800%2B3BsinglePromotionId%3A3A7F789dc8c5b87cf3d11bb53df585f18b&review=42&sale=131&search=1&source=search&spm=a2o4k.searchlist.list.0&stock=1" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-xs text-slate-400 mt-2">注：列表中包含本次抓取到的所有商品记录，列表限制显示约 10 行，超出部分请滚动查看。</p>
+        </section>
+
+        <!-- Trend Chart -->
+        <section class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
+             <h3 class="text-2xl font-bold mb-4">📈 价格波动趋势 (7日)</h3>
+            <div class="p-4 bg-slate-50 rounded-lg">
+                <div class='w-full h-96 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400'>[价格趋势图表占位符 - 需引入 Plotly/Chart.js 渲染逻辑]</div>
+            </div>
+            <p class="text-xs text-slate-500 mt-4">此图表显示了过去七天内各平台价格的平均波动情况。</p>
+        </section>
+
+        
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial render to ensure the table filtering setup works
+            // Use querySelectorAll to handle potential cases where the first button might not be 'all' if the data set is filtered on the python side
+            const initialButton = document.querySelector('.filter-btn');
+            if (initialButton) {
+                filterTable('all', initialButton);
+            }
+        });
+
+        const tableBody = document.getElementById('price-table-body');
+        const allRows = Array.from(tableBody.querySelectorAll('tr'));
+        
+        function filterTable(platform, button) {
+            // 1. Update active button state
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            if (button) {
+                button.classList.add('active');
+            }
+
+            // 2. Filter rows based on platform
+            let filteredRows = [];
+            
+            allRows.forEach(row => {
+                const rowPlatform = row.getAttribute('data-platform');
+                if (platform === 'all' || rowPlatform === platform) {
+                    row.style.display = ''; // Show
+                    filteredRows.push(row);
+                } else {
+                    row.style.display = 'none'; // Hide
+                }
+            });
+
+            // 3. Simple enhancement: stripe the visible rows for readability
+            filteredRows.forEach((row, index) => {
+                row.classList.remove('bg-slate-100');
+                if (index % 2 === 1) {
+                    row.classList.add('bg-slate-100');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

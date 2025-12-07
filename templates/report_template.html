@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品价格追踪与对比报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Inter', 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+        .card { transition: all 0.2s; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .table-scroll-container { max-height: 400px; /* 限制最大高度以确保只显示约10行 */ overflow-y: auto; }
+        .filter-btn.active { background-color: #0ea5e9; color: white; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4 md:p-10">
+
+    <div class="max-w-6xl mx-auto space-y-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-2">🛍️ 跨平台价格追踪报告</h1>
+            <p class="text-slate-500 text-sm">本次报告于 {{ generation_time }} 生成</p>
+        </header>
+
+        <!-- AI Summary & Key Stats -->
+        {% if stats %}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- AI Summary Card -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-blue-100 card">
+                <div class="flex items-center mb-3">
+                    <i class="fa-solid fa-robot text-blue-500 mr-3 text-xl"></i>
+                    <h2 class="text-xl font-semibold text-blue-900">AI 购物建议</h2>
+                </div>
+                <p class="text-lg font-medium text-slate-700">
+                    {{ ai_summary }}
+                </p>
+            </div>
+            
+            <!-- Key Stats Card -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg border border-slate-100 card">
+                <h2 class="text-xl font-semibold mb-4">今日价格统计 ({{ stats.latest_date }})</h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-500">最低价 ({{ stats.best_platform }})</span>
+                        <!-- 注意：这里假设所有货币已转换为 USD，如果未转换，请修改这里的货币符号 -->
+                        <span class="text-lg font-bold text-green-600">${{ stats.min_price }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-500">最高价</span>
+                        <span class="text-lg font-bold text-red-600">${{ stats.max_price }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-500">平均价</span>
+                        <span class="text-lg font-bold text-blue-600">${{ stats.avg_price }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Detail Table & Filter -->
+        <section class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
+            <h3 class="text-2xl font-bold mb-4">🛒 商品价格明细</h3>
+            
+            <!-- Filter Controls -->
+            <div class="mb-4 flex flex-wrap gap-2 items-center">
+                <span class="text-sm font-medium mr-2 text-slate-600">筛选平台:</span>
+                <button onclick="filterTable('all', this)" class="filter-btn px-4 py-2 rounded-full text-sm bg-blue-500 text-white active transition">全部</button>
+                
+                <!-- 优化去重逻辑：在 Python/Jinja2 模板中生成不重复的平台按钮 -->
+                {% set unique_platforms = [] %}
+                {% for item in prices %}
+                    {% if item.platform not in unique_platforms %}
+                        {% set _ = unique_platforms.append(item.platform) %}
+                        <button onclick="filterTable('{{ item.platform }}', this)" class="filter-btn px-4 py-2 rounded-full text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition">{{ item.platform }}</button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Table Container with Scroll -->
+            <div class="table-scroll-container border border-slate-200 rounded-lg shadow-inner">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">平台</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">商品名称</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">价格</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">货币</th>
+                            <!-- 新增：时间列 -->
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">更新时间</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">链接</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-slate-200" id="price-table-body">
+                        {% for item in prices %}
+                        <tr data-platform="{{ item.platform }}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{{ item.platform }}</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">{{ item.title | truncate(60) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">{{ item.price }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ item.currency }}</td>
+                            <!-- 新增：时间数据 -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">{{ item.timestamp | default(item.date) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500 hover:text-blue-700">
+                                <a href="{{ item.url }}" target="_blank" class="hover:underline">查看</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-xs text-slate-400 mt-2">注：列表中包含本次抓取到的所有商品记录，列表限制显示约 10 行，超出部分请滚动查看。</p>
+        </section>
+
+        <!-- Trend Chart -->
+        <section class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
+             <h3 class="text-2xl font-bold mb-4">📈 价格波动趋势 (7日)</h3>
+            <div class="p-4 bg-slate-50 rounded-lg">
+                {{ chart_html | safe }}
+            </div>
+            <p class="text-xs text-slate-500 mt-4">此图表显示了过去七天内各平台价格的平均波动情况。</p>
+        </section>
+
+        {% else %}
+        <div class="text-center py-12 bg-white rounded-xl shadow-lg border border-slate-200">
+            <h2 class="text-2xl font-semibold text-red-500 mb-2">数据不足或抓取失败</h2>
+            <p class="text-slate-600">本次运行未抓取到有效价格数据，无法生成报告和统计信息。</p>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial render to ensure the table filtering setup works
+            // Use querySelectorAll to handle potential cases where the first button might not be 'all' if the data set is filtered on the python side
+            const initialButton = document.querySelector('.filter-btn');
+            if (initialButton) {
+                filterTable('all', initialButton);
+            }
+        });
+
+        const tableBody = document.getElementById('price-table-body');
+        const allRows = Array.from(tableBody.querySelectorAll('tr'));
+        
+        function filterTable(platform, button) {
+            // 1. Update active button state
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            if (button) {
+                button.classList.add('active');
+            }
+
+            // 2. Filter rows based on platform
+            let filteredRows = [];
+            
+            allRows.forEach(row => {
+                const rowPlatform = row.getAttribute('data-platform');
+                if (platform === 'all' || rowPlatform === platform) {
+                    row.style.display = ''; // Show
+                    filteredRows.push(row);
+                } else {
+                    row.style.display = 'none'; // Hide
+                }
+            });
+
+            // 3. Simple enhancement: stripe the visible rows for readability
+            filteredRows.forEach((row, index) => {
+                row.classList.remove('bg-slate-100');
+                if (index % 2 === 1) {
+                    row.classList.add('bg-slate-100');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
